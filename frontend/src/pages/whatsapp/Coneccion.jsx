@@ -51,6 +51,36 @@ const Coneccion = () => {
         <li>Selecciona "Vincular un dispositivo" y escanea el código QR que aparece en esta pantalla.</li>
         <li>Una vez escaneado, tu cuenta se conectará automáticamente.</li>
       </ul>
+      <button
+        onClick={async () => {
+          try {
+            const response = await fetch('http://localhost:3001/api/logout', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+            if (data.success) {
+              alert('Sesión cerrada. Por favor escanee el nuevo código QR.');
+              setQrCode(null); // Clear current QR code to show placeholder
+            } else {
+              alert('Error al cerrar sesión: ' + data.message);
+            }
+          } catch (error) {
+            alert('Error al conectar con el servidor: ' + error.message);
+          }
+        }}
+        style={{
+          marginBottom: '20px',
+          padding: '10px 20px',
+          backgroundColor: '#007bff',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer'
+        }}
+      >
+        Cerrar sesión y generar nuevo QR
+      </button>
       <div style={{
         border: '2px dashed #ccc',
         borderRadius: '8px',
