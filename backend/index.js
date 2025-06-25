@@ -6,6 +6,7 @@
  */
 
 const { iniciarBot, logoutBot, resetQrFlag } = require('./whatsapp/connectionManager');
+const { wss } = require('./whatsapp/websocketServer'); // Import WebSocket server to start it
 
 // Start the WhatsApp bot on backend startup
 iniciarBot()
@@ -15,6 +16,11 @@ iniciarBot()
   .catch((error) => {
     console.error('Failed to start WhatsApp bot:', error);
   });
+
+// Log WebSocket server start
+wss.on('listening', () => {
+  console.log('WebSocket server started on port 8081');
+});
 
 module.exports = {
   iniciarBot,

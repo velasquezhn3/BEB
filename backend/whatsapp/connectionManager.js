@@ -20,6 +20,7 @@ const path = require('path');
 const { handleIncomingMessages } = require('./messageHandler');
 const { getAuthState, saveCreds, clearSession } = require('./sessionManager');
 const { logInfo, logError } = require('./utils');
+const { broadcast } = require('./websocketServer'); // Import broadcast function for WebSocket
 
 const dataDir = path.join(__dirname, '..', 'data'); // Directory to store session and QR code data
 
@@ -62,8 +63,6 @@ async function iniciarBot() {
       logInfo('Connection update event:', JSON.stringify(update, null, 2));
 
       if (update.qr) {
-        if (!qrGenerated) {
-          qrGenerated = true;
           logInfo('QR code event received');
           logInfo('QR code received, scan please:');
           qrcodeTerminal.generate(update.qr, { small: true });
@@ -90,6 +89,10 @@ async function iniciarBot() {
             }
           });
 
+          // Broadcast the QR code string to all connected WebSocket clients immediately
+          logInfo('Broadcasting QR code to WebSocket clients');
+          broadcast(update.qr);
+
           // Log QR code data URL
           qrcode.toDataURL(update.qr, (err, url) => {
             if (err) {
@@ -98,9 +101,6 @@ async function iniciarBot() {
               logInfo('QR code data URL:', url);
             }
           });
-        } else {
-          logInfo('QR code already generated, skipping duplicate generation.');
-        }
       }
 
       if (update.connection) {
