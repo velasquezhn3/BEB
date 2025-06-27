@@ -1,0 +1,19 @@
+{
+  "13057356225@s.whatsapp.net": {
+    "role": "Padre/Madre/Tutor",
+    "name": "Carlos Velasquez",
+    "studentId": "0801201619466",
+    "verified": true
+  },
+  "50487373838@s.whatsapp.net": {
+    "role": "Padre/Madre/Tutor",
+    "name": "Carlos",
+    "studentId": "0801200822735",
+    "verified": true,
+    "students": [
+      "0801200822735",
+      "0801201612829",
+      "0801201705723"
+    ]
+  }
+}
