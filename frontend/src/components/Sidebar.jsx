@@ -2,10 +2,13 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { FaTachometerAlt, FaDollarSign, FaBullhorn, FaFileAlt, FaUsers, FaCogs, FaLifeRing, FaClipboardList } from 'react-icons/fa';
 /* */
+import { FaList } from 'react-icons/fa';
+
 const menuItems = [
   { name: 'Dashboard', path: 'dashboard', icon: <FaTachometerAlt /> },
   { name: 'Whatsapp', path: 'whatsapp/Coneccion', icon: <FaDollarSign /> },
   { name: 'Seguimiento de Pagos', path: 'payments/payment-tracker', icon: <FaDollarSign /> },
+  { name: 'Colas de mensajes', path: 'message-queues', icon: <FaList /> },
  /* { name: 'Alertas de Deudas', path: 'payments/debt-alerts', icon: <FaDollarSign /> },
   { name: 'Mensajes Masivos', path: 'broadcasts/broadcast-sender', icon: <FaBullhorn /> },
   { name: 'Plantillas', path: 'broadcasts/templates-manager', icon: <FaFileAlt /> },

@@ -11,6 +11,7 @@ import { getUserData } from './userDataManager.js';
 import { getStudentsByEncargado } from './userRelationshipManager.js';
 import { stateHandlers } from './handlerRegistry.js';
 import { getUserState, setUserState, getTempUserData, setTempUserData } from './stateManager.js';
+import { enqueueMessage } from './messageQueue.js';
 
 /**
  * Main handler function for incoming messages.
@@ -31,24 +32,31 @@ export async function handleIncomingMessages(botInstance, msg) {
 
     logInfo(`Received message from ${userId}: ${text}`);
 
-    // Get user data (role and name) from persistent storage
+    // Obtener datos del usuario (rol y nombre) del almacenamiento persistente
     let userData = getUserData(userId);
 
-    // Use temp data if userData not fully saved yet
+    // Usar datos temporales si userData no está completamente guardado aún
     if (!userData) {
       userData = getTempUserData(userId);
     }
 
-    // Handle back navigation
-    if (text.toLowerCase() === 'volver' || text === '0') {
+    // Loguear estado y datos temporales para depuración
+    const state = getUserState(userId);
+    const tempData = getTempUserData(userId);
+    console.log(`[handleIncomingMessages] userId: ${userId}, state: ${state}, tempData: ${JSON.stringify(tempData)}, text: ${text}`);
+
+    // Manejar navegación hacia atrás y comando de menú
+    if (text.toLowerCase() === 'volver' || text === '0' || text.toLowerCase() === 'menú') {
       setUserState(userId, null);
       setTempUserData(userId, null);
-      await botInstance.sendMessage(userId, { text: 'Menú principal:\n1. Alumno\n2. Padre/Madre/Tutor\n3. Docente\n4. Administración\nPor favor, seleccione su rol enviando el número o el nombre.' });
+      await enqueueMessage(userId, { text: 'Menú principal:\n1. Alumno\n2. Padre/Madre/Tutor\n3. Docente\n4. Administración\nPor favor, seleccione su rol enviando el número o el nombre.' });
       return;
     }
 
     // Handle user states for multi-step flows
-    const state = getUserState(userId);
+    // const state = getUserState(userId);
+
+    // console.log(`[handleIncomingMessages] userId: ${userId}, state: ${state}, text: ${text}`);
 
     if (!userData || !userData.role) {
       // User role not set, expect role selection
@@ -73,17 +81,17 @@ export async function handleIncomingMessages(botInstance, msg) {
         setTempUserData(userId, { role: selectedRole });
         if (selectedRole === 'Alumno') {
           setUserState(userId, 'ASK_ID');
-          await botInstance.sendMessage(userId, { text: 'Gracias. Su rol ha sido registrado como Alumno.\nPor favor, envíe su número de identidad personal.' });
+          await enqueueMessage(userId, { text: 'Gracias. Su rol ha sido registrado como Alumno.\nPor favor, envíe su número de identidad personal.' });
         } else {
           setUserState(userId, 'ASK_NAME');
-          await botInstance.sendMessage(userId, { text: `Gracias. Su rol ha sido registrado como: ${selectedRole}.\nPor favor, envíe su nombre y apellido.` });
+          await enqueueMessage(userId, { text: `Gracias. Su rol ha sido registrado como: ${selectedRole}.\nPor favor, envíe su nombre y apellido.` });
         }
       } else {
         // Ask user to select role with numbers
         const roleOptions = Object.entries(roleMap)
           .map(([num, roleName]) => `${num}. ${roleName}`)
           .join('\n');
-        await botInstance.sendMessage(userId, { text: `Por favor, seleccione su rol enviando el número o el nombre:\n${roleOptions}` });
+        await enqueueMessage(userId, { text: `Por favor, seleccione su rol enviando el número o el nombre:\n${roleOptions}` });
       }
       return;
     }
@@ -97,30 +105,30 @@ export async function handleIncomingMessages(botInstance, msg) {
     // If user is verified and has role, show menu and handle options
     if (userData && userData.verified && userData.role) {
       const role = userData.role;
-      const menu = getMenuByRole(role);
+      const menu = getMenuByRole(role, userData.name || '');
 
       switch (role) {
         case 'Alumno':
           if (text === '1') {
-            await botInstance.sendMessage(userId, { text: 'Funcionalidad Ver notas en desarrollo.' });
+            await enqueueMessage(userId, { text: 'Funcionalidad Ver notas en desarrollo.' });
           } else if (text === '2') {
-            await botInstance.sendMessage(userId, { text: 'Funcionalidad Horarios en desarrollo.' });
+            await enqueueMessage(userId, { text: 'Funcionalidad Horarios en desarrollo.' });
           } else if (text === '3') {
-            await botInstance.sendMessage(userId, { text: 'Funcionalidad Contactar a un docente en desarrollo.' });
+            await enqueueMessage(userId, { text: 'Funcionalidad Contactar a un docente en desarrollo.' });
           } else if (text === '4') {
             // Información de pagos
             setUserState(userId, 'PAGO_MENU');
             await stateHandlers['PAGO_MENU'](botInstance, userId);
           } else {
-            await botInstance.sendMessage(userId, { text: `Opción inválida. Por favor seleccione una opción válida:\n${menu}` });
+            await enqueueMessage(userId, { text: `Opción inválida. Por favor seleccione una opción válida:\n${menu}` });
           }
           break;
 
         case 'Padre/Madre/Tutor':
           if (text === '1') {
-            await botInstance.sendMessage(userId, { text: 'Funcionalidad Ver rendimiento académico en desarrollo.' });
+            await enqueueMessage(userId, { text: 'Funcionalidad Ver rendimiento académico en desarrollo.' });
           } else if (text === '2') {
-            await botInstance.sendMessage(userId, { text: 'Funcionalidad Ver asistencia en desarrollo.' });
+            await enqueueMessage(userId, { text: 'Funcionalidad Ver asistencia en desarrollo.' });
           } else if (text === '3') {
             // Información de pagos
             setUserState(userId, 'PAGO_MENU');
@@ -128,26 +136,26 @@ export async function handleIncomingMessages(botInstance, msg) {
           } else if (text === '4') {
             setUserState(userId, 'GESTIONAR_ALUMNOS_MENU');
             const gestionMenu = '1. Agregar alumno\n2. Eliminar alumno\n3. Volver al menú principal';
-            await botInstance.sendMessage(userId, { text: `Menú Gestionar Alumnos:\n${gestionMenu}` });
+            await enqueueMessage(userId, { text: `Menú Gestionar Alumnos:\n${gestionMenu}` });
           } else {
-            await botInstance.sendMessage(userId, { text: `Opción inválida. Por favor seleccione una opción válida:\n${menu}` });
+            await enqueueMessage(userId, { text: `Opción inválida. Por favor seleccione una opción válida:\n${menu}` });
           }
           break;
 
         case 'Docente':
           if (text === '1') {
-            await botInstance.sendMessage(userId, { text: 'Funcionalidad Reportar notas en desarrollo.' });
+            await enqueueMessage(userId, { text: 'Funcionalidad Reportar notas en desarrollo.' });
           } else if (text === '2') {
-            await botInstance.sendMessage(userId, { text: 'Funcionalidad Ver horarios de clase en desarrollo.' });
+            await enqueueMessage(userId, { text: 'Funcionalidad Ver horarios de clase en desarrollo.' });
           } else if (text === '3') {
-            await botInstance.sendMessage(userId, { text: 'Funcionalidad Comunicados administrativos en desarrollo.' });
+            await enqueueMessage(userId, { text: 'Funcionalidad Comunicados administrativos en desarrollo.' });
           } else {
-            await botInstance.sendMessage(userId, { text: `Opción inválida. Por favor seleccione una opción válida:\n${menu}` });
+            await enqueueMessage(userId, { text: `Opción inválida. Por favor seleccione una opción válida:\n${menu}` });
           }
           break;
 
         default:
-          await botInstance.sendMessage(userId, { text: 'Rol no reconocido. Por favor, reinicie la conversación.' });
+          await enqueueMessage(userId, { text: 'Rol no reconocido. Por favor, reinicie la conversación.' });
           setUserState(userId, null);
           setTempUserData(userId, null);
           break;
@@ -156,7 +164,7 @@ export async function handleIncomingMessages(botInstance, msg) {
     }
 
     // Default fallback
-    await botInstance.sendMessage(userId, { text: 'No se pudo procesar su solicitud. Por favor, intente nuevamente.' });
+    await enqueueMessage(userId, { text: 'No se pudo procesar su solicitud. Por favor, intente nuevamente.' });
   } catch (error) {
     console.error('Error handling incoming message:', error);
   }

@@ -20,4 +20,5 @@ export const stateHandlers = {
   // Payment handlers
   'PAGO_MENU': paymentHandler.handlePagoMenu,
   'SELECT_PAGO_STUDENT': paymentHandler.handleSelectPagoStudent,
+  'POST_PAGO_MENU': paymentHandler.handlePostPagoMenu,
 };

@@ -43,7 +43,7 @@ function sanitizarValorMes(valor) {
  * @param {Object} estudiante - Objeto estudiante con información de pagos.
  * @returns {Object} Detalles de deuda y estado de pagos.
  */
-function calcularDeuda(estudiante) {
+function calcularDeuda(estudiante, duracionPlan = 11) {
   const ahora = new Date();
   const diaActual = ahora.getDate();
   const mesActual = ahora.getMonth() + 1;
@@ -54,8 +54,8 @@ function calcularDeuda(estudiante) {
     num: index + 1
   }));
 
-  // Determine starting month based on planDePago
-  const inicioMes = estudiante.planDePago === 10 ? 2 : 1;
+  // Determine starting month based on duracionPlan
+  const inicioMes = duracionPlan === 10 ? 2 : 1;
 
   // Filter months to check for pending payments starting from inicioMes to mesActual
   const mesesPendientes = meses

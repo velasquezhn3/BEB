@@ -39,6 +39,14 @@ export async function handleAskName(botInstance, userId, text) {
  */
 export async function handleAskId(botInstance, userId, text) {
   const tempData = getTempUserData(userId) || {};
+
+  // Validate DPI: must be exactly 13 numeric characters
+  const dpiRegex = /^\d{13}$/;
+  if (!dpiRegex.test(text)) {
+    await botInstance.sendMessage(userId, { text: 'Error: El número de identidad debe contener exactamente 13 caracteres numéricos. Por favor, inténtelo de nuevo.' });
+    return; // Do not advance state, ask again
+  }
+
   setTempUserData(userId, { ...tempData, idNumber: text });
   setUserState(userId, 'ASK_PIN');
   await botInstance.sendMessage(userId, { text: 'Por favor, envíe su PIN de validación.' });

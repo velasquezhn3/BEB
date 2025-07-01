@@ -4,6 +4,7 @@ import { buscarEstudiante } from '../../services/studentService.js';
 import { getStudentsByEncargado, addRelationship, removeRelationship } from '../userRelationshipManager.js';
 import { validarPIN } from '../userPinValidationService.js';
 import { getUserState, setUserState, getTempUserData, setTempUserData } from '../stateManager.js';
+import { enqueueMessage } from '../messageQueue.js';
 
 /**
  * Handler for the 'GESTIONAR_ALUMNOS_MENU' state.
@@ -11,12 +12,12 @@ import { getUserState, setUserState, getTempUserData, setTempUserData } from '..
 export async function handleGestionarAlumnosMenu(botInstance, userId, text) {
   if (text === '1') {
     setUserState(userId, 'AGREGAR_ALUMNO_ID');
-    await botInstance.sendMessage(userId, { text: 'Por favor, envíe el número de identidad del alumno que desea agregar.' });
+    await enqueueMessage(userId, { text: 'Por favor, envíe el número de identidad del alumno que desea agregar.' });
   } else if (text === '2') {
     const alumnosIds = getStudentsByEncargado(userId);
     if (alumnosIds.length === 0) {
       setUserState(userId, null);
-      await botInstance.sendMessage(userId, { text: 'No tiene alumnos registrados para eliminar. Volviendo al menú principal.' });
+      await enqueueMessage(userId, { text: 'No tiene alumnos registrados para eliminar. Volviendo al menú principal.' });
       return;
     }
     let listaAlumnos = 'Seleccione el número del alumno a eliminar:\n';
@@ -27,12 +28,12 @@ export async function handleGestionarAlumnosMenu(botInstance, userId, text) {
     }
     setUserState(userId, 'ELIMINAR_ALUMNO_SELECCION');
     setTempUserData(userId, { alumnos: alumnosIds });
-    await botInstance.sendMessage(userId, { text: listaAlumnos });
+    await enqueueMessage(userId, { text: listaAlumnos });
   } else if (text === '3') {
     setUserState(userId, null);
-    await botInstance.sendMessage(userId, { text: `Volviendo al menú principal:\n${getMenuByRole('Padre/Madre/Tutor')}` });
+    await enqueueMessage(userId, { text: `Volviendo al menú principal:\n${getMenuByRole('Padre/Madre/Tutor')}` });
   } else {
-    await botInstance.sendMessage(userId, { text: 'Opción inválida. Por favor seleccione una opción válida del menú Gestionar Alumnos.' });
+    await enqueueMessage(userId, { text: 'Opción inválida. Por favor seleccione una opción válida del menú Gestionar Alumnos.' });
   }
 }
 
@@ -43,7 +44,7 @@ export async function handleAgregarAlumnoId(botInstance, userId, text) {
   const tempData = getTempUserData(userId) || {};
   setTempUserData(userId, { ...tempData, newStudentId: text });
   setUserState(userId, 'AGREGAR_ALUMNO_PIN');
-  await botInstance.sendMessage(userId, { text: 'Por favor, envíe el PIN del alumno para validar.' });
+  await enqueueMessage(userId, { text: 'Por favor, envíe el PIN del alumno para validar.' });
 }
 
 /**
@@ -62,10 +63,10 @@ export async function handleAgregarAlumnoPin(botInstance, userId, text) {
 
     setUserState(userId, null);
     setTempUserData(userId, null);
-    await botInstance.sendMessage(userId, { text: 'Alumno agregado exitosamente.\nVolviendo al menú principal.' });
-    await botInstance.sendMessage(userId, { text: getMenuByRole('Padre/Madre/Tutor') });
+    await enqueueMessage(userId, { text: 'Alumno agregado exitosamente.\nVolviendo al menú principal.' });
+    await enqueueMessage(userId, { text: getMenuByRole('Padre/Madre/Tutor') });
   } else {
-    await botInstance.sendMessage(userId, { text: 'PIN inválido para el alumno. Por favor, intente nuevamente o solicite ayuda.' });
+    await enqueueMessage(userId, { text: 'PIN inválido para el alumno. Por favor, intente nuevamente o solicite ayuda.' });
   }
 }
 
@@ -77,7 +78,7 @@ export async function handleEliminarAlumnoSeleccion(botInstance, userId, text) {
   const alumnos = tempData.alumnos || [];
   const index = parseInt(text, 10) - 1;
   if (isNaN(index) || index < 0 || index >= alumnos.length) {
-    await botInstance.sendMessage(userId, { text: 'Selección inválida. Por favor, intente nuevamente.' });
+    await enqueueMessage(userId, { text: 'Selección inválida. Por favor, intente nuevamente.' });
     return;
   }
   const alumnoAEliminar = alumnos[index];
@@ -90,6 +91,6 @@ export async function handleEliminarAlumnoSeleccion(botInstance, userId, text) {
 
   setUserState(userId, null);
   setTempUserData(userId, null);
-  await botInstance.sendMessage(userId, { text: `Alumno ${alumnoAEliminar} eliminado exitosamente.\nVolviendo al menú principal.` });
-  await botInstance.sendMessage(userId, { text: getMenuByRole('Padre/Madre/Tutor') });
+  await enqueueMessage(userId, { text: `Alumno ${alumnoAEliminar} eliminado exitosamente.\nVolviendo al menú principal.` });
+  await enqueueMessage(userId, { text: getMenuByRole('Padre/Madre/Tutor') });
 }

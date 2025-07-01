@@ -22,6 +22,8 @@ const { getAuthState, saveCreds, clearSession } = require('./sessionManager');
 const { logInfo, logError } = require('./utils');
 const { broadcast } = require('./websocketServer'); // Import broadcast function for WebSocket
 
+const { registerProcessor } = require('./messageQueue');
+
 const dataDir = path.join(__dirname, '..', 'data'); // Directory to store session and QR code data
 
 let qrGenerated = false; // Flag to prevent duplicate QR code generation
@@ -57,6 +59,9 @@ async function iniciarBot() {
       browser: ["Sistema Escolar", "Chrome", "122.0.6261.94"],
       mobile: false
     });
+
+    // Register the message queue processor with the socket
+    registerProcessor(botInstance);
 
     // Listen for connection updates (QR code, connection status, disconnects)
     botInstance.ev.on('connection.update', (update) => {

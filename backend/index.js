@@ -8,6 +8,7 @@
 const express = require('express');
 const cors = require('cors');
 const { iniciarBot, logoutBot, resetQrFlag } = require('./whatsapp/connectionManager');
+const { messageQueue } = require('./whatsapp/messageQueue');
 const { wss } = require('./whatsapp/websocketServer'); // Import WebSocket server to start it
 
 const app = express();
@@ -24,6 +25,21 @@ app.post('/api/logout', async (req, res) => {
     res.json({ success: true, message: 'Logged out and session cleared. Please scan new QR code.' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error during logout', error: error.message });
+  }
+});
+
+app.get('/api/message-queues', async (req, res) => {
+  try {
+    const counts = await messageQueue.getJobCounts();
+    res.json({
+      waiting: counts.waiting || 0,
+      active: counts.active || 0,
+      completed: counts.completed || 0,
+      failed: counts.failed || 0,
+      delayed: counts.delayed || 0,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error fetching queue stats', error: error.message });
   }
 });
 
